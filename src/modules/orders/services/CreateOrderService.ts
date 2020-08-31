@@ -61,6 +61,18 @@ class CreateOrderService {
       throw new AppError(errors.join('\n'));
     }
 
+    await this.productsRepository.updateQuantity(
+      existentProducts.map(product => {
+        const orderProductQuantity =
+          products.find(prd => prd.id === product.id)?.quantity ?? 0;
+
+        return {
+          id: product.id,
+          quantity: product.quantity - orderProductQuantity,
+        };
+      }),
+    );
+
     const order = await this.ordersRepository.create({
       customer,
       products: existentProducts.map(product => {
@@ -69,7 +81,7 @@ class CreateOrderService {
         return {
           product_id: product.id,
           quantity: orderProductQuantity,
-          price: orderProductQuantity * product.price,
+          price: product.price,
         };
       }),
     });
